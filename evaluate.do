@@ -321,7 +321,7 @@ drop if rel_date > 200
 label var rel_date "Date relative to AOM"
 
 cap drop scatter_today
-gen scatter_today = cum_macro23
+gen scatter_today = cum_macro24
 label var scatter_today "`=trim(c(current_date))'"
 twoway ///
 	(line cum_macro18 rel_date) ///
@@ -331,15 +331,15 @@ twoway ///
 	(line cum_macro22 rel_date) ///
 	(line cum_macro23 rel_date) ///
 	(line cum_macro24 rel_date) ///
-	(scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
-		msize(small) msymbol(X) mcolor(black)) ///
+	/// (scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
+	/// 	msize(small) msymbol(X) mcolor(black)) ///
 	, xline(0) scheme(white) ///
 	legend(position(10)) title("Job announcements in Macro") ///
 	xlabel(-30 "-1M" -60 "-2M" -90 "-3M" 0 "AOM" 30 "+1M" 60 "+2M" 90 "+3M" 150 "New Year")
 graph export "AOM_Jobs_Macro.png", replace
 	
 cap drop scatter_today
-gen scatter_today = cum_micro23
+gen scatter_today = cum_micro24
 label var scatter_today "`=trim(c(current_date))'"
 twoway ///
 	(line cum_micro18 rel_date) ///
@@ -349,8 +349,8 @@ twoway ///
 	(line cum_micro22 rel_date) ///
 	(line cum_micro23 rel_date) ///
 	(line cum_micro24 rel_date) ///
-	(scatter scatter_today rel_date if rel_date == today() - date("08/05/2023", "MDY"), ///
-		msize(small) msymbol(X) mcolor(black)) ///
+	/// (scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
+	///	msize(small) msymbol(X) mcolor(black)) ///
 	, xline(0) scheme(white) ///
 	legend(position(10)) title("Job announcements in Micro") ///
 	xlabel(-30 "-1M" -60 "-2M" -90 "-3M" 0 "AOM" 30 "+1M" 60 "+2M" 90 "+3M" 150 "New Year")
