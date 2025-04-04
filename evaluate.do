@@ -2,31 +2,81 @@ global START_MONTH = "05"
 global PATH = "Jobs.xlsx"
 
 /*******************************************************************************
+	2024 Macro
+********************************************************************************/
+import excel "${PATH}", sheet("Macro_2024_2025") firstrow clear
+replace PostDate = "9/17/2024" if PostDate == "Reposted 3/27/2025 (originally 9/17/2024)"
+replace PostDate = "8/4/2024" if PostDate == "Reposted 2/11/2025 (originally 8/4/2024)"
+replace PostDate = "10/24/2024" if PostDate == "Reposted 2/11/2035 (originally 10/24/2024)"
+drop if strpos(PostDate, "2020")
+drop if strpos(PostDate, "2023")
+drop if missing(PostDate)
+replace PostDate = trim(PostDate)
+gen date = date(PostDate, "MDY")
+format %td date
+assert !missing(date)
+order date, first
+drop if date < date("${START_MONTH}/01/2024", "MDY")
+gen rel_date = date - date("08/09/2024", "MDY")
+gcollapse (count) macro24=date, by(rel_date)
+tempfile t
+save "`t'", replace
+
+/*******************************************************************************
+	2024 Micro
+********************************************************************************/
+import excel "${PATH}", sheet("Micro_2024_2025") firstrow clear
+rename Date PostDate
+replace PostDate = "10/24/2024" if PostDate == "Reposted 2/11/2025 (originally 10/24/2024)"
+replace PostDate = "10/22/2024" if PostDate == "Reposted 3/25/2025 (originally 10/22/2024)"
+replace PostDate = "10/4/2024" if PostDate == "Reposted 2/11/2025 (originally 10/4/2024)"
+replace PostDate = "9/30/2024" if PostDate == "Reposted 2/24/25 (originally 9/30/2024)"
+replace PostDate = "9/17/2024" if PostDate == "Reposted 3/27/2025 (originally 9/17/2024)"
+replace PostDate = "8/29/2024" if PostDate == "Reposted 2/26/2025 (originally 8/29/2024)"
+replace PostDate = "2/14/2025" if PostDate == "Feb-14"
+replace PostDate = "2/13/2025" if PostDate == "Feb-13"
+drop if strpos(PostDate, "2020")
+drop if strpos(PostDate, "2023")
+drop if missing(PostDate)
+replace PostDate = trim(PostDate)
+gen date = date(PostDate, "MDY")
+format %td date
+assert !missing(date)
+order date, first
+drop if date < date("${START_MONTH}/01/2024", "MDY")
+gen rel_date = date - date("08/09/2024", "MDY")
+gcollapse (count) micro24=date, by(rel_date)
+merge 1:1 rel_date using "`t'"
+drop _merge
+save "`t'", replace
+
+/*******************************************************************************
 	2023 Macro
 ********************************************************************************/
 import excel "${PATH}", sheet("Macro_2023_2024") firstrow clear
-replace PostDate = subinstr(PostDate, "/2023", "", .)
-drop if strpos(PostDate, "2021")
+drop if missing(Posted)
+rename Posted PostDate
 replace PostDate = trim(PostDate)
-replace PostDate = PostDate[_n-1] if missing(PostDate)
-replace PostDate = PostDate + "/2023"
 gen date = date(PostDate, "MDY")
 format %td date
+assert !missing(date)
 order date, first
 drop if date < date("${START_MONTH}/01/2023", "MDY")
 gen rel_date = date - date("08/05/2023", "MDY")
 gcollapse (count) macro23=date, by(rel_date)
-tempfile t
+merge 1:1 rel_date using "`t'"
+drop _merge
 save "`t'", replace
 
 /*******************************************************************************
 	2023 Micro
 ********************************************************************************/
 import excel "${PATH}", sheet("Micro_2023_2024") firstrow clear
-drop if strpos(School, "Trump") // Joke entry
-replace PostDate = subinstr(PostDate, "/2023", "", .)
+rename Date PostDate
 replace PostDate = trim(PostDate)
-replace PostDate = PostDate + "/2023"
+drop if _n >= 274
+replace PostDate = PostDate[_n-1] if missing(PostDate)
+drop if missing(PostDate)
 gen date = date(PostDate, "MDY")
 format %td date
 order date, first
@@ -280,7 +330,8 @@ twoway ///
 	(line cum_macro21 rel_date) ///
 	(line cum_macro22 rel_date) ///
 	(line cum_macro23 rel_date) ///
-	(scatter scatter_today rel_date if rel_date == today() - date("08/05/2023", "MDY"), ///
+	(line cum_macro24 rel_date) ///
+	(scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
 		msize(small) msymbol(X) mcolor(black)) ///
 	, xline(0) scheme(white) ///
 	legend(position(10)) title("Job announcements in Macro") ///
@@ -297,6 +348,7 @@ twoway ///
 	(line cum_micro21 rel_date) ///
 	(line cum_micro22 rel_date) ///
 	(line cum_micro23 rel_date) ///
+	(line cum_micro24 rel_date) ///
 	(scatter scatter_today rel_date if rel_date == today() - date("08/05/2023", "MDY"), ///
 		msize(small) msymbol(X) mcolor(black)) ///
 	, xline(0) scheme(white) ///
