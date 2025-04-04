@@ -9,3 +9,5 @@ Posting volume relative to the Academy of Management Annual Conference start dat
 </p>
 
 Note: I just took the listings from the Excel sheets without further selection and processing. Feel free to experiment ...
+
+(Last update: April 4th, 2025)
