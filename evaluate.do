@@ -2,6 +2,46 @@ global START_MONTH = "05"
 global PATH = "Jobs.xlsx"
 
 /*******************************************************************************
+	2025 Macro
+********************************************************************************/
+import excel using "${PATH}", sheet("Macro_2025_2026") firstrow clear
+drop if strpos(PostDate, "2020")
+drop if strpos(PostDate, "2023")
+drop if strpos(PostDate, "2024")
+drop if missing(PostDate)
+replace PostDate = trim(PostDate)
+gen date = date(PostDate, "MDY")
+format %td date
+assert !missing(date)
+order date, first
+drop if date < date("${START_MONTH}/01/2025", "MDY")
+gen rel_date = date - date("07/25/2025", "MDY")
+gcollapse (count) macro25=date, by(rel_date)
+tempfile t
+save "`t'", replace
+
+/*******************************************************************************
+	2025 Micro
+********************************************************************************/
+import excel using "${PATH}", sheet("Micro_2025_2026") firstrow clear
+rename Date PostDate
+drop if strpos(PostDate, "2020")
+drop if strpos(PostDate, "2023")
+drop if strpos(PostDate, "2024")
+drop if missing(PostDate)
+replace PostDate = trim(PostDate)
+gen date = date(PostDate, "MDY")
+format %td date
+assert !missing(date)
+order date, first
+drop if date < date("${START_MONTH}/01/2025", "MDY")
+gen rel_date = date - date("07/25/2025", "MDY")
+gcollapse (count) micro25=date, by(rel_date)
+merge 1:1 rel_date using "`t'"
+drop _merge
+save "`t'", replace
+
+/*******************************************************************************
 	2024 Macro
 ********************************************************************************/
 import excel "${PATH}", sheet("Macro_2024_2025") firstrow clear
@@ -19,7 +59,8 @@ order date, first
 drop if date < date("${START_MONTH}/01/2024", "MDY")
 gen rel_date = date - date("08/09/2024", "MDY")
 gcollapse (count) macro24=date, by(rel_date)
-tempfile t
+merge 1:1 rel_date using "`t'"
+drop _merge
 save "`t'", replace
 
 /*******************************************************************************
@@ -315,13 +356,13 @@ foreach vari of varlist micro* macro* {
 	local lbl = subinstr("`lbl'", "micro", "", .)
 	label var cum_`vari' "AOM 20`lbl'"
 }
-replace cum_macro23 = . if rel_date > today() - date("08/05/2023", "MDY")
-replace cum_micro23 = . if rel_date > today() - date("08/05/2023", "MDY")
+replace cum_macro25 = . if rel_date > today() - date("07/25/2025", "MDY")
+replace cum_micro25 = . if rel_date > today() - date("07/25/2025", "MDY")
 drop if rel_date > 200
 label var rel_date "Date relative to AOM"
 
 cap drop scatter_today
-gen scatter_today = cum_macro24
+gen scatter_today = cum_macro25
 label var scatter_today "`=trim(c(current_date))'"
 twoway ///
 	(line cum_macro18 rel_date) ///
@@ -331,15 +372,16 @@ twoway ///
 	(line cum_macro22 rel_date) ///
 	(line cum_macro23 rel_date) ///
 	(line cum_macro24 rel_date) ///
-	/// (scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
-	/// 	msize(small) msymbol(X) mcolor(black)) ///
+	(line cum_macro25 rel_date) ///
+	(scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
+		msize(small) msymbol(X) mcolor(black)) ///
 	, xline(0) scheme(white) ///
 	legend(position(10)) title("Job announcements in Macro") ///
 	xlabel(-30 "-1M" -60 "-2M" -90 "-3M" 0 "AOM" 30 "+1M" 60 "+2M" 90 "+3M" 150 "New Year")
 graph export "AOM_Jobs_Macro.png", replace
-	
+
 cap drop scatter_today
-gen scatter_today = cum_micro24
+gen scatter_today = cum_micro25
 label var scatter_today "`=trim(c(current_date))'"
 twoway ///
 	(line cum_micro18 rel_date) ///
@@ -349,8 +391,9 @@ twoway ///
 	(line cum_micro22 rel_date) ///
 	(line cum_micro23 rel_date) ///
 	(line cum_micro24 rel_date) ///
-	/// (scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
-	///	msize(small) msymbol(X) mcolor(black)) ///
+	(line cum_micro25 rel_date) ///
+	(scatter scatter_today rel_date if rel_date == today() - date("07/25/2025", "MDY"), ///
+	   	msize(small) msymbol(X) mcolor(black)) ///
 	, xline(0) scheme(white) ///
 	legend(position(10)) title("Job announcements in Micro") ///
 	xlabel(-30 "-1M" -60 "-2M" -90 "-3M" 0 "AOM" 30 "+1M" 60 "+2M" 90 "+3M" 150 "New Year")
